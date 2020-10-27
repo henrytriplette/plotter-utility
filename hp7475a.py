@@ -4,6 +4,8 @@ import time
 import os
 import serial
 
+import PySimpleGUI as sg
+
 # answer to <ESC>.O Output Extended Status Information [Manual: 10-42]
 EXT_STATUS_BUF_EMPTY = 0x08  # buffer empty
 EXT_STATUS_VIEW = 0x10  # "view" button has been pressed, plotting suspended
@@ -64,7 +66,7 @@ def read_answer(tty):
     try:
         return int(buf)
     except ValueError as e:
-        print(repr(e))
+        sg.Print(repr(e))
         raise HPGLError(-2)
 
 
@@ -101,7 +103,7 @@ def sendToHp7475a(hpglfile, port = 'COM6', baud = '9600'):
         if ss.st_size != 0:
             input_bytes = ss.st_size
     except Exception as e:
-        print('Error stat\'ing file', hpglfile, str(e))
+        sg.Print('Error stat\'ing file', hpglfile, str(e))
 
     hpgl = open(hpglfile, 'rb')
 
@@ -124,24 +126,24 @@ def sendToHp7475a(hpglfile, port = 'COM6', baud = '9600'):
         # Output Buffer Size [Manual 10-36]
         bufsz = plotter_cmd(tty, b'\033.L', True)
     except HPGLError as e:
-        print('*** Error initializing the plotter!')
-        print(e)
+        sg.Print('*** Error initializing the plotter!')
+        sg.Print(e)
         sys.exit(1)
 
-    print('Buffer size of plotter is', bufsz, 'bytes.')
+    sg.Print('Buffer size of plotter is', bufsz, 'bytes.')
 
     total_bytes_written = 0
 
     while True:
         status = plotter_cmd(tty, b'\033.O', True)
         if (status & (EXT_STATUS_VIEW | EXT_STATUS_LEVER)):
-            print('*** Printer is viewing plot, pausing data.')
+            sg.Print('*** Printer is viewing plot, pausing data.')
             time.sleep(5.0)
             continue
 
         bufsz = plotter_cmd(tty, b'\033.B', True)
         if bufsz < 256:
-            print(f'Only {bufsz} bytes free. :-(', end='\r')
+            sg.Print(f'Only {bufsz} bytes free. :-(', end='\r')
             sys.stdout.flush()
             time.sleep(0.25)
             continue
@@ -150,15 +152,15 @@ def sendToHp7475a(hpglfile, port = 'COM6', baud = '9600'):
         bufsz_read = len(data)
 
         if bufsz_read == 0:
-            print('*** EOF reached, exiting.')
+            sg.Print('*** EOF reached, exiting.')
             break
 
         if input_bytes != None:
             percent = 100.0 * total_bytes_written/input_bytes
-            print(
+            sg.Print(
                 f'{percent:.2f}%, {total_bytes_written} byte written. Adding {bufsz_read} ({bufsz} free).')
         else:
-            print(
+            sg.Print(
                 f'{total_bytes_written} byte written. Adding {bufsz_read} ({bufsz} free).')
         tty.write(data)
         total_bytes_written += bufsz_read

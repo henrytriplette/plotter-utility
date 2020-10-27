@@ -17,6 +17,12 @@ def main():
             # [sg.Button('Open VigoWriter', key='vigowriter')],
             [sg.Button('Open Photoshop', key='photoshop')],
             [sg.Button('Open Inkscape', key='inkscape')],
+
+            [sg.Text('Open Folders')],
+            [sg.Button('Open Home', key='folder_home')],
+            # [sg.Button('Open 3D', key='folder_3d')],
+            # [sg.Button('Open Vigowriter', key='folder_vigowriter')],
+            [sg.Button('Open p5.js', key='folder_p5js')],
     ]
 
     utility = [
@@ -27,12 +33,9 @@ def main():
         [sg.Button('Optimize paths', key='utility_optimizeSVG')],
     ]
 
-    paths = [
-            [sg.Text('Open Folders')],
-            [sg.Button('Open Home', key='folder_home')],
-            # [sg.Button('Open 3D', key='folder_3d')],
-            # [sg.Button('Open Vigowriter', key='folder_vigowriter')],
-            [sg.Button('Open p5.js', key='folder_p5js')],
+    hp = [
+        [sg.Text('HP 7475a')],
+        [sg.Button('SVG to HPGL', key='utility_convertHPGL')],
     ]
 
     footer = [
@@ -41,7 +44,7 @@ def main():
     ]
 
     layout = [
-                [sg.Column(menu), sg.Column(utility), sg.Column(paths)],
+                [sg.Column(menu), sg.Column(utility), sg.Column(hp)],
                 [sg.Column(footer)]
             ]
 
@@ -62,16 +65,25 @@ def main():
         # Utility
         if event == 'utility_scaleA4':
             if values['inputSVG']:
-                subprocess.Popen('vpype read ' + str(values['inputSVG']) + ' scale --to 21cm 29cm write --page-format a4 --center output.svg')
+                outputFile = values['inputSVG'][:-4] + '-A4Scaled.svg'
+                subprocess.Popen('vpype read "' + str(values['inputSVG']) + '" scale --to 21cm 29cm write --page-format a4 --center "' + str(outputFile) + '"')
                 print('utility_scaleA4')
         if event == 'utility_visualizeSVG':
             if values['inputSVG']:
-                subprocess.Popen('vpype read ' + str(values['inputSVG']) + ' show --colorful')
+                # outputFile = values['inputSVG'][:-4]
+                subprocess.Popen('vpype read "' + str(values['inputSVG']) + '" show --colorful')
                 print('utility_visualizeSVG')
         if event == 'utility_optimizeSVG':
             if values['inputSVG']:
-                subprocess.Popen('vpype read ' + str(values['inputSVG']) + ' linemerge --tolerance 0.1mm linesort write optimized.svg')
+                outputFile = values['inputSVG'][:-4] + '-Optimized.svg'
+                subprocess.Popen('vpype read "' + str(values['inputSVG']) + '" linemerge --tolerance 0.1mm linesort write "' + str(outputFile) + '"')
                 print('utility_optimizeSVG')
+        if event == 'utility_convertHPGL':
+            if values['inputSVG']:
+                outputFile = values['inputSVG'][:-4] + '-Converted.hpgl'
+                subprocess.Popen('vpype read "' + str(values['inputSVG']) + '" write --device hp7475a --page-format a4 --landscape --center "' + str(outputFile) + '"')
+                print('utility_convertHPGL')
+
 
         # Software
         if event == 'blender':

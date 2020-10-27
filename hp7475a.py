@@ -93,30 +93,19 @@ def plotter_cmd(tty, cmd, get_answer=False):
         raise e
 
 
-def main():
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--port', type=str, default='COM6',
-                        metavar='TTY', help='Serial port (default: COM6)')
-    parser.add_argument('-b', '--baud', type=int, default=9600,
-                        metavar='N', help='Baudrate (default: 9600)')
-
-    parser.add_argument('hpglfile')
-
-    args = parser.parse_args()
+def sendToHp7475a(hpglfile, port = 'COM6', baud = '9600'):
 
     input_bytes = None
     try:
-        ss = os.stat(args.hpglfile)
+        ss = os.stat(hpglfile)
         if ss.st_size != 0:
             input_bytes = ss.st_size
     except Exception as e:
-        print('Error stat\'ing file', args.hpglfile, str(e))
+        print('Error stat\'ing file', hpglfile, str(e))
 
-    hpgl = open(args.hpglfile, 'rb')
+    hpgl = open(hpglfile, 'rb')
 
-    tty = serial.Serial(args.port, args.baud, timeout=2.0)
+    tty = serial.Serial(port, baud, timeout=2.0)
 
     # <ESC>.@<dec>;<dec>:
     #  1st parameter is buffer size 0..1024, optional
@@ -173,7 +162,3 @@ def main():
                 f'{total_bytes_written} byte written. Adding {bufsz_read} ({bufsz} free).')
         tty.write(data)
         total_bytes_written += bufsz_read
-
-
-if __name__ == '__main__':
-    main()

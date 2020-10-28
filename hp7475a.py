@@ -1,4 +1,7 @@
 #!/usr/bin/python
+
+# Based on vogelchr/hp7475a-send (https://github.com/vogelchr/hp7475a-send)
+
 import sys
 import time
 import os

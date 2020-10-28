@@ -1,23 +1,2 @@
-attrs==20.2.0
-certifi==2020.6.20
-click==7.1.2
-click-plugins==1.1.1
-cycler==0.10.0
-future==0.18.2
-iso8601==0.1.13
-kiwisolver==1.2.0
-matplotlib==3.3.2
-numpy==1.19.2
-Pillow==8.0.1
-pyparsing==2.4.7
 pyserial==3.4
 PySimpleGUI==4.30.0
-python-dateutil==2.8.1
-PyYAML==5.3.1
-scipy==1.5.3
-Shapely @ file:///D:/Sites/triplette-python-axidraw/utility/Shapely-1.7.1-cp37-cp37m-win_amd64.whl
-six==1.15.0
-svgpathtools @ git+https://github.com/abey79/svgpathtools@e4ec7085506a187b92a333e652a3680a5703c737
-svgwrite==1.4
-toml==0.10.1
-vpype @ git+https://github.com/abey79/vpype.git@913e2f62dd0eb6f266d1438cc242ff43a14c8185

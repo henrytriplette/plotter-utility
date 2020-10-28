@@ -1,6 +1,7 @@
 import PySimpleGUI as sg
 import configparser
 import subprocess
+import os
 
 import hp7475a
 
@@ -23,14 +24,21 @@ def main():
             [sg.Button('Open p5.js', size=(25, 1), key='folder_p5js')],
     ]
 
-    utility = [
+    svg_utility = [
         [sg.Text('Input SVG', size=(15, 1)), sg.Input(key='inputSVG'), sg.FileBrowse(file_types=(('SVG', '*.svg'),),)],
+        [sg.Text('-- SVG - svgo --')],
+        [sg.Button('Optimize SVG', size=(25, 1), key='utility_svgoOptimize')],
         [sg.Text('-- SVG - vpype --')],
         [sg.Button('Scale A4 Center', size=(25, 1), key='utility_scaleA4')],
         [sg.Button('Visualize path structure', size=(25, 1), key='utility_visualizeSVG')],
         [sg.Button('Optimize paths', size=(25, 1), key='utility_optimizeSVG')],
         [sg.Text('-- HPGL --')],
         [sg.Button('SVG to HPGL', size=(25, 1), key='utility_convertHPGL')],
+    ]
+
+    hpgl_utility = [
+        [sg.Text('Input HPGL', size=(15, 1)), sg.Input(key='inputHPGLUtility'), sg.FileBrowse(file_types=(('HPGL', '*.hpgl'),),)],
+        [sg.Text('Set Pen Speed', size=(15, 1)), sg.Slider(range=(0,38), default_value=25, size=(20,15), orientation='horizontal', key="utility_penSpeed"), sg.Button('Change Pen Speed', size=(25, 1), key='utility_changePenSpeed')],
     ]
 
     hp = [
@@ -49,7 +57,8 @@ def main():
                 [sg.TabGroup(
                     [
                         [
-                        sg.Tab('SVG Utility', utility, tooltip='SVG Utility'),
+                        sg.Tab('SVG Utility', svg_utility, tooltip='SVG Utility'),
+                        sg.Tab('HPGL Utility', hpgl_utility, tooltip='HPGL Utility'),
                         sg.Tab('HP7475a', hp, tooltip='hp7475a Utility'),
                         sg.Tab('Links', link, tooltip='Links'),
                         ]
@@ -72,7 +81,12 @@ def main():
         if event == 'quit':
             break
 
-        # Utility
+        # Utility SVG
+        if event == 'utility_svgoOptimize':
+            if values['inputSVG']:
+                subprocess.Popen('svgo "' + str(values['inputSVG']) + '"', shell=True)
+            else:
+                sg.popup_error('Please select a valid .svg file')
         if event == 'utility_scaleA4':
             if values['inputSVG']:
                 outputFile = values['inputSVG'][:-4] + '-A4Scaled.svg'
@@ -98,6 +112,16 @@ def main():
             else:
                 sg.popup_error('Please select a valid .svg file')
 
+        # Utility HPGL
+        if event == 'utility_changePenSpeed':
+            if values['inputHPGLUtility']:
+                with open(str(values['inputHPGLUtility'])) as r:
+                  text = r.read().replace("SP1;", "VS"+ str(values['utility_penSpeed'][:-2]) +";SP1;").replace("VS;", "VS"+ str(values['utility_penSpeed'][:-2]) +";SP1;")
+                  print(text)
+                with open(str(values['inputHPGLUtility']), "w") as w:
+                  w.write(text)
+            else:
+                sg.popup_error('Please select a valid .hpgl file')
 
         # Software
         if event == 'illustrator':

@@ -3,6 +3,7 @@ import sys
 import time
 import os
 import serial
+import serial.tools.list_ports
 
 import PySimpleGUI as sg
 
@@ -66,7 +67,7 @@ def read_answer(tty):
     try:
         return int(buf)
     except ValueError as e:
-        sg.Print(repr(e))
+        print(repr(e))
         raise HPGLError(-2)
 
 
@@ -94,8 +95,11 @@ def plotter_cmd(tty, cmd, get_answer=False):
         e.add_cause(f'after sending {repr(cmd)[1:]}')
         raise e
 
+def listComPorts():
+    for i in serial.tools.list_ports.comports():
+        sg.Print(str(i).split(" ")[0], background_color='blue', text_color='white')
 
-def sendToHp7475a(hpglfile, port = 'COM6', baud = '9600'):
+def sendToHp7475a(hpglfile, port = 'COM6', baud = 9600):
 
     input_bytes = None
     try:
@@ -103,7 +107,7 @@ def sendToHp7475a(hpglfile, port = 'COM6', baud = '9600'):
         if ss.st_size != 0:
             input_bytes = ss.st_size
     except Exception as e:
-        sg.Print('Error stat\'ing file', hpglfile, str(e))
+        print('Error stat\'ing file', hpglfile, str(e))
 
     hpgl = open(hpglfile, 'rb')
 
@@ -126,9 +130,10 @@ def sendToHp7475a(hpglfile, port = 'COM6', baud = '9600'):
         # Output Buffer Size [Manual 10-36]
         bufsz = plotter_cmd(tty, b'\033.L', True)
     except HPGLError as e:
-        sg.Print('*** Error initializing the plotter!')
+        sg.Print('*** Error initializing the plotter!', background_color='red', text_color='white')
         sg.Print(e)
-        sys.exit(1)
+        # sys.exit(1)
+        return
 
     sg.Print('Buffer size of plotter is', bufsz, 'bytes.')
 

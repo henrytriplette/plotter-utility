@@ -33,6 +33,10 @@ def main():
         [sg.Button('Visualize path structure', size=(25, 1), key='utility_visualizeSVG')],
         [sg.Button('Optimize paths', size=(25, 1), key='utility_optimizeSVG')],
         [sg.Text('-- HPGL --')],
+        [
+            sg.Text('Page Size', size=(15, 1)), sg.Combo(['tight', 'a6', 'a5', 'a4', 'a3', 'letter', 'legal', 'executive', 'tabloid'], default_value='a4', size=(15, 1), key="utility_pageSize"),
+            sg.Text('Page Orientation', size=(15, 1)), sg.Combo(['vertical', 'landscape'], default_value='vertical', size=(15, 1), key="utility_pageOrientation")
+        ],
         [sg.Button('SVG to HPGL', size=(25, 1), key='utility_convertHPGL')],
     ]
 
@@ -108,7 +112,10 @@ def main():
         if event == 'utility_convertHPGL':
             if values['inputSVG']:
                 outputFile = values['inputSVG'][:-4] + '-Converted.hpgl'
-                subprocess.Popen('vpype read "' + str(values['inputSVG']) + '" write --device hp7475a --page-format a4 --landscape --center "' + str(outputFile) + '"')
+                if (values['utility_pageOrientation'] == 'landscape'):
+                    subprocess.Popen('vpype read "' + str(values['inputSVG']) + '" write --device hp7475a --page-format ' + str(values['utility_pageSize']) + ' --landscape --center "' + str(outputFile) + '"')
+                else:
+                    subprocess.Popen('vpype read "' + str(values['inputSVG']) + '" write --device hp7475a --page-format ' + str(values['utility_pageSize']) + ' --center "' + str(outputFile) + '"')
             else:
                 sg.popup_error('Please select a valid .svg file')
 

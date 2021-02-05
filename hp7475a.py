@@ -151,7 +151,7 @@ def sendToHp7475a(hpglfile, port = 'COM6', baud = 9600):
 
         bufsz = plotter_cmd(tty, b'\033.B', True)
         if bufsz < 256:
-            sg.Print(f'Only {bufsz} bytes free. :-(', end='\r')
+            # sg.Print(f'Only {bufsz} bytes free. :-(', end='\r')
             sys.stdout.flush()
             time.sleep(0.25)
             continue
@@ -166,9 +166,11 @@ def sendToHp7475a(hpglfile, port = 'COM6', baud = 9600):
         if input_bytes != None:
             percent = 100.0 * total_bytes_written/input_bytes
             sg.Print(
-                f'{percent:.2f}%, {total_bytes_written} byte written. Adding {bufsz_read} ({bufsz} free).')
+                # f'{percent:.2f}%, {total_bytes_written} byte written. Adding {bufsz_read} ({bufsz} free).')
+                f'{percent:.2f}%, {total_bytes_written} byte written. \n')
         else:
             sg.Print(
-                f'{total_bytes_written} byte written. Adding {bufsz_read} ({bufsz} free).')
+                # f'{total_bytes_written} byte written. Adding {bufsz_read} ({bufsz} free).')
+                f'{percent:.2f}%, {bufsz_read} byte added. \n')
         tty.write(data)
         total_bytes_written += bufsz_read

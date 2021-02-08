@@ -45,6 +45,29 @@ def main():
         [sg.Text('Set Pen Speed', size=(15, 1)), sg.Slider(range=(0,38), default_value=25, size=(20,15), orientation='horizontal', key="utility_penSpeed"), sg.Button('Change Pen Speed', size=(25, 1), key='utility_changePenSpeed')],
     ]
 
+    vpype_flow_imager = [
+        [sg.Text('Input Image', size=(15, 1)), sg.Input(key='inputVpypeFlowImagerImage'), sg.FileBrowse(file_types=(('IMG', '*.jpg'),),)],
+
+        [sg.Text('Simplex noise coordinate multiplier. The smaller, the smoother the flow field.', size=(55, 1)),
+         sg.Slider(range=(1,10), default_value=1, size=(20,15), orientation='horizontal', key="vfi_noise_coeff")], # FLOAT 0.001
+        [sg.Text('Number of rotated copies of the flow field', size=(55, 1)),
+         sg.Slider(range=(0,10), default_value=1, size=(20,15), orientation='horizontal', key="vfi_n_fields")], # INTEGER
+        [sg.Text('Minimum flowline separation', size=(55, 1)),
+         sg.Slider(range=(0,10), default_value=8, size=(20,15), orientation='horizontal', key="vfi_min_sep")], # FLOAT 0.8
+        [sg.Text('Maximum flowline separation', size=(55, 1)),
+         sg.Slider(range=(0,100), default_value=10, size=(20,15), orientation='horizontal', key="vfi_max_sep")], # FLOAT
+        [sg.Text('Maximum flowline length', size=(55, 1)),
+         sg.Slider(range=(0,100), default_value=40, size=(20,15), orientation='horizontal', key="vfi_max_length")], # FLOAT
+        [sg.Text('The input image will be rescaled to have sides at most max_size px', size=(55, 1)),
+         sg.Slider(range=(1,10), default_value=8, size=(20,15), orientation='horizontal', key="vfi_max_size")], # INTEGER 800
+        [sg.Text('PRNG seed (overriding vpype seed)', size=(55, 1)),
+         sg.Slider(range=(10,100), default_value=25, size=(20,15), orientation='horizontal', key="vfi_seed")], # INTEGER
+        [sg.Text('Flow field PRNG seed (overriding the main --seed)', size=(55, 1)),
+         sg.Slider(range=(0,100), default_value=25, size=(20,15), orientation='horizontal', key="vfi_flow_seed")], # INTEGER
+
+        [sg.Button('Start processing image', size=(25, 1), key='utility_RunVpypeFlowImager')],
+    ]
+
     hp = [
         [sg.Text('Input HPGL', size=(15, 1)), sg.Input(key='inputHPGL'), sg.FileBrowse(file_types=(('HPGL', '*.hpgl'),),)],
         [sg.Text('Comm Port', size=(15, 1)), sg.InputText(default_text="COM6", key="utility_comPort"), sg.Button('List Ports', size=(15, 1), key='utility_listPorts')],
@@ -63,6 +86,7 @@ def main():
                         [
                         sg.Tab('SVG Utility', svg_utility, tooltip='SVG Utility'),
                         sg.Tab('HPGL Utility', hpgl_utility, tooltip='HPGL Utility'),
+                        sg.Tab('Vpype Flow Imager', vpype_flow_imager, tooltip='Vpype Flow Imager'),
                         sg.Tab('HP7475a', hp, tooltip='hp7475a Utility'),
                         sg.Tab('Links', link, tooltip='Links'),
                         ]
@@ -130,6 +154,25 @@ def main():
             else:
                 sg.popup_error('Please select a valid .hpgl file')
 
+        # Vpype Flow Imager
+        if event == 'utility_RunVpypeFlowImager':
+            if values['inputVpypeFlowImagerImage']:
+                outputFile = values['inputVpypeFlowImagerImage'][:-3] + '-.svg'
+
+                # Generate parameters
+                args = ''
+                args =+ 'noise_coeff= ' + str(values['vfi_noise_coeff'])
+                args =+ 'n_fields= ' + str(values['vfi_n_fields'])
+                args =+ 'min_sep= ' + str(values['vfi_min_sep'])
+                args =+ 'max_sep= ' + str(values['vfi_max_sep'])
+                args =+ 'max_length= ' + str(values['vfi_max_length'])
+                args =+ 'max_size= ' + str(values['vfi_max_size'])
+                args =+ 'seed= ' + str(values['vfi_seed'])
+                args =+ 'flow_seed= ' + str(values['vfi_flow_seed'])
+                print(args)
+                # subprocess.Popen('vpype flow_img "' + str(values['inputVpypeFlowImagerImage']) + '" write "' + str(outputFile) + '"')
+            else:
+                sg.popup_error('Please select a valid .jpg file')
         # Software
         if event == 'illustrator':
             if config['software']['illustrator']:

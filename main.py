@@ -22,6 +22,8 @@ def main():
             [sg.Text('Open Folders', size=(15, 1))],
             [sg.Button('Open Home', size=(25, 1), key='folder_home')],
             [sg.Button('Open p5.js', size=(25, 1), key='folder_p5js')],
+            [sg.Button('Open plotter-vision', size=(25, 1), key='plotterVision')],
+
     ]
 
     svg_utility = [
@@ -196,6 +198,10 @@ def main():
             if config['folders']['p5js']:
                 subprocess.Popen("%s %s" % ("explorer.exe", config['folders']['p5js']))
                 print('Opening p5.js')
+        if event == 'plotterVision':
+            if config['folders']['plotterVision']:
+                subprocess.Popen("%s %s" % ("explorer.exe", config['folders']['plotterVision']))
+                print('Opening plotter vision')
 
         # HP7475a
         if event == 'utility_listPorts':

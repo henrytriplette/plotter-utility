@@ -18,6 +18,7 @@ def main():
             [sg.Button('Open Illustrator', size=(25, 1), key='illustrator')],
             [sg.Button('Open Photoshop', size=(25, 1), key='photoshop')],
             [sg.Button('Open Inkscape', size=(25, 1), key='inkscape')],
+            [sg.Button('Open DrawingBotV3', size=(25, 1), key='drawingbot')],
 
             [sg.Text('Open Folders', size=(15, 1))],
             [sg.Button('Open Home', size=(25, 1), key='folder_home')],
@@ -188,6 +189,10 @@ def main():
             if config['software']['inkscape']:
                 subprocess.Popen(config['software']['inkscape'])
                 print('Opening inkscape')
+        if event == 'drawingbot':
+            if config['software']['drawingbot']:
+                subprocess.Popen(config['software']['drawingbot'])
+                print('Opening drawingbot')
 
         # Folders
         if event == 'folder_home':

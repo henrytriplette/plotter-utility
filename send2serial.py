@@ -7,6 +7,7 @@ import time
 import os
 import serial
 import serial.tools.list_ports
+from serial import SerialException
 
 import PySimpleGUI as sg
 
@@ -115,9 +116,18 @@ def sendToPlotter(hpglfile, port = 'COM3', baud = 9600, plotter = '7475a'):
     hpgl = open(hpglfile, 'rb')
 
     if (plotter == 'mp4200'):
-        tty = serial.Serial(port = port, baudrate = 9600, parity = serial.PARITY_NONE, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS, xonxoff = True, timeout = 2.0)
+        try:
+            tty = serial.Serial(port = port, baudrate = 9600, parity = serial.PARITY_NONE, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS, xonxoff = True, timeout = 2.0)
+        except SerialException as e:
+            sg.popup_error(repr(e))
+            return False
+
     else:
-        tty = serial.Serial(port, baud, timeout=2.0)
+        try:
+            tty = serial.Serial(port, baud, timeout=2.0)
+        except SerialException as e:
+            sg.popup_error(repr(e))
+            return False
 
     # <ESC>.@<dec>;<dec>:
     #  1st parameter is buffer size 0..1024, optional

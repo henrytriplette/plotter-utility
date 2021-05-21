@@ -211,7 +211,8 @@ def main():
 
         # HP7475a
         if event == 'utility_listPorts':
-            hp7475a.listComPorts()
+            send2serial.listComPorts()
+            
         if event == 'utility_startPlot_7475a':
             if values['inputHPGL']:
                 send2serial.sendToPlotter(str(values['inputHPGL']), str(values['utility_comPort']), int(values['utility_baudRate']), '7475a' )

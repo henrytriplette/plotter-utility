@@ -102,7 +102,7 @@ def listComPorts():
     for i in serial.tools.list_ports.comports():
         sg.Print(str(i).split(" ")[0], background_color='blue', text_color='white')
 
-def sendToHp7475a(hpglfile, port = 'COM6', baud = 9600):
+def sendToHp7475a(hpglfile, port = 'COM3', baud = 9600):
 
     input_bytes = None
     try:

@@ -1,4 +1,7 @@
 #!/usr/bin/python
+
+# Based on vogelchr/hp7475a-send (https://github.com/vogelchr/hp7475a-send)
+
 import sys
 import time
 import os
@@ -27,7 +30,8 @@ ERRORS = {
     16: 'input buffer has overflowed'
 }
 
-class GRPTError(Exception):
+
+class HPGLError(Exception):
     def __init__(self, n, cause=None):
         self.errcode = n
         if cause:
@@ -46,11 +50,12 @@ class GRPTError(Exception):
 
         if self.causes:
             cstr = ', '.join(self.causes)
-            return f'GRPTError: {errstr}, caused by {cstr}'
-        return f'GRPTError: {errstr}'
+            return f'HPGLError: {errstr}, caused by {cstr}'
+        return f'HPGLError: {errstr}'
 
     def __str__(self):
         return repr(self)
+
 
 # read decimal number, followed by carriage return from plotter
 def read_answer(tty):
@@ -58,7 +63,7 @@ def read_answer(tty):
     while True:
         c = tty.read(1)
         if not c:  # timeout
-            raise GRPTError(-1)  # timeout
+            raise HPGLError(-1)  # timeout
         if c == b'\r':
             break
         buf += c
@@ -66,7 +71,7 @@ def read_answer(tty):
         return int(buf)
     except ValueError as e:
         print(repr(e))
-        raise GRPTError(-2)
+        raise HPGLError(-2)
 
 
 def chk_error(tty):
@@ -74,11 +79,12 @@ def chk_error(tty):
     ret = None
     try:
         ret = read_answer(tty)
-    except GRPTError as e:
+    except HPGLError as e:
         e.add_cause('ESC.E (Output extended error code).')
         raise e
     if ret:
-        raise GRPTError(ret)
+        raise HPGLError(ret)
+
 
 def plotter_cmd(tty, cmd, get_answer=False):
     tty.write(cmd)
@@ -88,11 +94,15 @@ def plotter_cmd(tty, cmd, get_answer=False):
         chk_error(tty)
         if get_answer:
             return answ
-    except GRPTError as e:
+    except HPGLError as e:
         e.add_cause(f'after sending {repr(cmd)[1:]}')
         raise e
 
-def sendToMp4200(hpglfile, port = 'COM3', baud = 9600):
+def listComPorts():
+    for i in serial.tools.list_ports.comports():
+        sg.Print(str(i).split(" ")[0], background_color='blue', text_color='white')
+
+def sendToPlotter(hpglfile, port = 'COM3', baud = 9600, plotter = '7475a'):
 
     input_bytes = None
     try:
@@ -104,11 +114,19 @@ def sendToMp4200(hpglfile, port = 'COM3', baud = 9600):
 
     hpgl = open(hpglfile, 'rb')
 
-    tty = serial.Serial(port = port, baudrate = 9600, parity = serial.PARITY_NONE, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS, xonxoff = True, timeout = 2.0)
-    # tty = serial.Serial(port = "COM3", baudrate = 9600, timeout=0.5, parity = serial.PARITY_NONE, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS, xonxoff = True)
+    if (plotter == 'mp4200'):
+        tty = serial.Serial(port = port, baudrate = 9600, parity = serial.PARITY_NONE, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS, xonxoff = True, timeout = 2.0)
+    else:
+        tty = serial.Serial(port, baud, timeout=2.0)
 
-    tty.flush()
-
+    # <ESC>.@<dec>;<dec>:
+    #  1st parameter is buffer size 0..1024, optional
+    #  2nd parameter is bit flags for operation mode
+    #     0x01 : enable HW handhaking
+    #     0x02 : ignored
+    #     0x04 : monitor mode 1 if set, mode 0 if unset (for terminal)
+    #     0x08 : 0: disable monitor mode, 1: enable monitor mode
+    #     0x10 : 0: normal mode, 1: block mode
     try:
         plotter_cmd(tty, b'\033.@;0:')  # Plotter Configuration [Manual 10-27]
         plotter_cmd(tty, b'\033.Y')  # Plotter On [Manual 10-26]
@@ -117,8 +135,8 @@ def sendToMp4200(hpglfile, port = 'COM3', baud = 9600):
 #        plotter_cmd(tty, b'\033.0')  # raise error
         # Output Buffer Size [Manual 10-36]
         bufsz = plotter_cmd(tty, b'\033.L', True)
-    except GRPTError as e:
-        sg.Print('*** Error initializing the plotter!')
+    except HPGLError as e:
+        sg.Print('*** Error initializing the plotter!', background_color='red', text_color='white')
         sg.Print(e)
         # sys.exit(1)
         return

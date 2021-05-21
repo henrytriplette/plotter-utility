@@ -3,8 +3,7 @@ import configparser
 import subprocess
 import os
 
-import hp7475a
-import mp4200
+import send2serial
 
 # Read Configuration
 config = configparser.ConfigParser()
@@ -72,18 +71,12 @@ def main():
         [sg.Button('Start processing image', size=(25, 1), key='utility_RunVpypeFlowImager')],
     ]
 
-    hp = [
-        [sg.Text('Input HPGL', size=(15, 1)), sg.Input(key='inputHPGL_hp'), sg.FileBrowse(file_types=(('HPGL', '*.hpgl'),),)],
-        [sg.Text('Comm Port', size=(15, 1)), sg.InputText(default_text="COM3", key="utility_comPort_hp"), sg.Button('List Ports', size=(15, 1), key='utility_listPorts')],
-        [sg.Text('Baud Rate', size=(15, 1)), sg.Combo(['9600', '4800'], default_value='9600', size=(43, 1), key="utility_baudRate_hp")],
-        [sg.Button('Start Plot on HP747a', size=(25, 1), key='utility_startPlot_hp')],
-    ]
-
-    graphtech = [
-        [sg.Text('Input HPGL', size=(15, 1)), sg.Input(key='inputHPGL_graphtech'), sg.FileBrowse(file_types=(('HPGL', '*.hpgl'),),)],
-        [sg.Text('Comm Port', size=(15, 1)), sg.InputText(default_text="COM3", key="utility_comPort_graphtech"), sg.Button('List Ports', size=(15, 1), key='utility_listPorts')],
-        [sg.Text('Baud Rate', size=(15, 1)), sg.Combo(['9600', '4800'], default_value='9600', size=(43, 1), key="utility_baudRate_graphtech")],
-        [sg.Button('Start Plot on Graphtech MP4200', size=(25, 1), key='utility_startPlot_graphtech')],
+    plot = [
+        [sg.Text('Input HPGL', size=(15, 1)), sg.Input(key='inputHPGL'), sg.FileBrowse(file_types=(('HPGL', '*.hpgl'),),)],
+        [sg.Text('Comm Port', size=(15, 1)), sg.InputText(default_text="COM3", key="utility_comPort"), sg.Button('List Ports', size=(15, 1), key='utility_listPorts')],
+        [sg.Text('Baud Rate', size=(15, 1)), sg.Combo(['9600', '4800'], default_value='9600', size=(43, 1), key="utility_baudRate")],
+        [sg.Button('Start Plot on HP747a', size=(25, 1), key='utility_startPlot_7475a')],
+        [sg.Button('Start Plot on Graphtech MP4200', size=(25, 1), key='utility_startPlot_mp4200')],
     ]
 
     # layout = [
@@ -98,8 +91,7 @@ def main():
                         sg.Tab('SVG Utility', svg_utility, tooltip='SVG Utility'),
                         sg.Tab('HPGL Utility', hpgl_utility, tooltip='HPGL Utility'),
                         sg.Tab('Vpype Flow Imager', vpype_flow_imager, tooltip='Vpype Flow Imager'),
-                        sg.Tab('HP7475a', hp, tooltip='hp7475a Utility'),
-                        sg.Tab('MP4200', graphtech, tooltip='Graphtech MP4200 Utility'),
+                        sg.Tab('Serial Print', plot, tooltip='Print on HP 7475a or Graphtech MP4200'),
                         sg.Tab('Links', link, tooltip='Links'),
                         ]
                     ])
@@ -220,15 +212,14 @@ def main():
         # HP7475a
         if event == 'utility_listPorts':
             hp7475a.listComPorts()
-        if event == 'utility_startPlot_hp':
-            if values['inputHPGL_hp']:
-                hp7475a.sendToHp7475a(str(values['inputHPGL_hp']), str(values['utility_comPort_hp']), int(values['utility_baudRate_hp']) )
+        if event == 'utility_startPlot_7475a':
+            if values['inputHPGL']:
+                send2serial.sendToPlotter(str(values['inputHPGL']), str(values['utility_comPort']), int(values['utility_baudRate']), '7475a' )
             else:
                 sg.popup_error('Please select a valid .hpgl file')
-
-        if event == 'utility_startPlot_graphtech':
-            if values['inputHPGL_graphtech']:
-                mp4200.sendToMp4200(str(values['inputHPGL_graphtech']), str(values['utility_comPort_graphtech']), int(values['utility_baudRate_graphtech']) )
+        if event == 'utility_startPlot_mp4200':
+            if values['inputHPGL']:
+                send2serial.sendToPlotter(str(values['inputHPGL']), str(values['utility_comPort']), int(values['utility_baudRate']), 'mp4200' )
             else:
                 sg.popup_error('Please select a valid .hpgl file')
 

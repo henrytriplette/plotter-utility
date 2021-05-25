@@ -104,7 +104,7 @@ def listComPorts():
         sg.Print(str(i).split(" ")[0], background_color='blue', text_color='white')
 
 def sendToPlotter(hpglfile, port = 'COM3', baud = 9600, plotter = '7475a'):
-
+    print(plotter)
     input_bytes = None
     try:
         ss = os.stat(hpglfile)
@@ -121,10 +121,9 @@ def sendToPlotter(hpglfile, port = 'COM3', baud = 9600, plotter = '7475a'):
         except SerialException as e:
             sg.popup_error(repr(e))
             return False
-
     else:
         try:
-            tty = serial.Serial(port, baud, timeout=2.0)
+            tty = serial.Serial(port, baudrate = 9600, timeout=2.0)
         except SerialException as e:
             sg.popup_error(repr(e))
             return False

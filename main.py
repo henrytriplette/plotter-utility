@@ -43,13 +43,25 @@ def main():
         [sg.Button('SVG to HPGL', size=(25, 1), key='utility_convertHPGL')],
     ]
 
+    svg_utility_bulk = [
+        [sg.Text('Input Folder', size=(15, 1)), sg.Input(key='inputSVGFolder'), sg.FolderBrowse(target=('inputSVGFolder'))],
+        [sg.Text('-- SVG - svgo --')],
+        [sg.Button('Optimize SVG', size=(25, 1), key='utility_svgoOptimizeBulk')],
+        [sg.Text('-- HPGL --')],
+        [
+            sg.Text('Page Size', size=(15, 1)), sg.Combo(['tight', 'a6', 'a5', 'a4', 'a3', 'letter', 'legal', 'executive', 'tabloid'], default_value='a4', size=(15, 1), key="utility_pageSizeBulk"),
+            sg.Text('Page Orientation', size=(15, 1)), sg.Combo(['portrait', 'landscape'], default_value='portrait', size=(15, 1), key="utility_pageOrientationBulk")
+        ],
+        [sg.Button('SVG to HPGL', size=(25, 1), key='utility_convertHPGLBulk')],
+    ]
+
     hpgl_utility = [
         [sg.Text('Input HPGL', size=(15, 1)), sg.Input(key='inputHPGLUtility'), sg.FileBrowse(file_types=(('HPGL', '*.hpgl'),),)],
         [sg.Text('Set Pen Speed', size=(15, 1)), sg.Slider(range=(0,38), default_value=25, size=(20,15), orientation='horizontal', key="utility_penSpeed"), sg.Button('Change Pen Speed', size=(25, 1), key='utility_changePenSpeed')],
     ]
 
     vpype_flow_imager = [
-        [sg.Text('Input Image', size=(15, 1)), sg.Input(key='inputVpypeFlowImagerImage'), sg.FileBrowse(file_types=(('IMG', '*.jpg'),),)],
+        [sg.Text('Input Image', size=(15, 1)), sg.Input(key='inputVpypeFlowImagerImage'), sg.FileBrowse(file_types=(('IMG', '*.*'),),)],
 
         [sg.Text('Simplex noise coordinate multiplier. The smaller, the smoother the flow field.', size=(55, 1)),
          sg.Slider(range=(1,10), default_value=1, size=(20,15), orientation='horizontal', key="vfi_noise_coeff")], # FLOAT 0.001
@@ -89,6 +101,7 @@ def main():
                     [
                         [
                         sg.Tab('SVG Utility', svg_utility, tooltip='SVG Utility'),
+                        sg.Tab('SVG Bulk', svg_utility_bulk, tooltip='SVG Bulk Processing'),
                         sg.Tab('HPGL Utility', hpgl_utility, tooltip='HPGL Utility'),
                         sg.Tab('Vpype Flow Imager', vpype_flow_imager, tooltip='Vpype Flow Imager'),
                         sg.Tab('Serial Print', plot, tooltip='Print on HP 7475a or Graphtech MP4200'),
@@ -147,6 +160,45 @@ def main():
             else:
                 sg.popup_error('Please select a valid .svg file')
 
+
+        # Utility SVG Bulk
+        if event == 'utility_svgoOptimizeBulk':
+            if values['inputSVGFolder']:
+
+                for root, dirs, files in os.walk(values['inputSVGFolder']):
+                    for filename in files:
+                        if filename.lower().endswith(('.svg')):
+                            file_path = os.path.join(root, filename)
+                            outputFile = file_path[:-4] + '-Optimized.svg'
+
+                            rendering = subprocess.Popen('svgo "' + str(file_path) + '" -o "' + outputFile + '"', shell=True)
+                            rendering.wait() # Hold on till process is finished
+
+                            rendering = subprocess.Popen('vpype read "' + str(outputFile) + '" linemerge --tolerance 0.1mm linesort write "' + str(outputFile) + '"')
+                            rendering.wait() # Hold on till process is finished
+            else:
+                sg.popup_error('Please select a valid folder')
+
+        if event == 'utility_convertHPGLBulk':
+            if values['inputSVGFolder']:
+
+                for root, dirs, files in os.walk(values['inputSVGFolder']):
+                    for filename in files:
+                        if filename.lower().endswith(('.svg')):
+                            file_path = os.path.join(root, filename)
+                            outputFile = file_path[:-4] + '-Converted.hpgl'
+
+                            if (values['utility_pageOrientationBulk'] == 'landscape'):
+                                rendering = subprocess.Popen('vpype read "' + str(file_path) + '" write --device hp7475a --page-size ' + str(values['utility_pageSizeBulk']) + ' --landscape --center "' + str(outputFile) + '"')
+                                rendering.wait() # Hold on till process is finished
+                            else:
+                                rendering = subprocess.Popen('vpype read "' + str(file_path) + '" write --device hp7475a --page-size ' + str(values['utility_pageSizeBulk']) + ' --center "' + str(outputFile) + '"')
+                                rendering.wait() # Hold on till process is finished
+
+            else:
+                sg.popup_error('Please select a valid folder')
+
+
         # Utility HPGL
         if event == 'utility_changePenSpeed':
             if values['inputHPGLUtility']:
@@ -165,16 +217,15 @@ def main():
 
                 # Generate parameters
                 args = ''
-                args =+ 'noise_coeff= ' + str(values['vfi_noise_coeff'])
-                args =+ 'n_fields= ' + str(values['vfi_n_fields'])
-                args =+ 'min_sep= ' + str(values['vfi_min_sep'])
-                args =+ 'max_sep= ' + str(values['vfi_max_sep'])
-                args =+ 'max_length= ' + str(values['vfi_max_length'])
-                args =+ 'max_size= ' + str(values['vfi_max_size'])
-                args =+ 'seed= ' + str(values['vfi_seed'])
-                args =+ 'flow_seed= ' + str(values['vfi_flow_seed'])
-                print(args)
-                # subprocess.Popen('vpype flow_img "' + str(values['inputVpypeFlowImagerImage']) + '" write "' + str(outputFile) + '"')
+                args += 'noise_coeff= ' + str(values['vfi_noise_coeff'])
+                args += ' n_fields= ' + str(values['vfi_n_fields'])
+                args += ' min_sep= ' + str(values['vfi_min_sep'])
+                args += ' max_sep= ' + str(values['vfi_max_sep'])
+                args += ' max_length= ' + str(values['vfi_max_length'])
+                args += ' max_size= ' + str(values['vfi_max_size'])
+                args += ' seed= ' + str(values['vfi_seed'])
+                args += ' flow_seed= ' + str(values['vfi_flow_seed'])
+                subprocess.Popen('vpype flow_img "' + str(values['inputVpypeFlowImagerImage']) + '" write "' + str(outputFile) + '"')
             else:
                 sg.popup_error('Please select a valid .jpg file')
         # Software
@@ -212,7 +263,7 @@ def main():
         # HP7475a
         if event == 'utility_listPorts':
             send2serial.listComPorts()
-            
+
         if event == 'utility_startPlot_7475a':
             if values['inputHPGL']:
                 send2serial.sendToPlotter(str(values['inputHPGL']), str(values['utility_comPort']), int(values['utility_baudRate']), '7475a' )

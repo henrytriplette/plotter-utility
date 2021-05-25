@@ -10,6 +10,7 @@ import serial.tools.list_ports
 from serial import SerialException
 
 import PySimpleGUI as sg
+import notification
 
 # answer to <ESC>.O Output Extended Status Information [Manual: 10-42]
 EXT_STATUS_BUF_EMPTY = 0x08  # buffer empty
@@ -173,6 +174,7 @@ def sendToPlotter(hpglfile, port = 'COM3', baud = 9600, plotter = '7475a'):
 
         if bufsz_read == 0:
             sg.Print('*** EOF reached, exiting.')
+            notification.telegram_sendNotification('*** EOF reached, exiting.')
             break
 
         if input_bytes != None:

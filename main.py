@@ -37,7 +37,8 @@ def main():
         [sg.Button('Optimize paths', size=(25, 1), key='utility_optimizeSVG')],
         [sg.Text('-- HPGL --')],
         [
-            sg.Text('Page Size', size=(15, 1)), sg.Combo(['tight', 'a6', 'a5', 'a4', 'a3', 'letter', 'legal', 'executive', 'tabloid'], default_value='a4', size=(15, 1), key="utility_pageSize"),
+            sg.Text('Page Size', size=(15, 1)), sg.Combo(['a4', 'a3'], default_value='a4', size=(15, 1), key="utility_pageSize"),
+            sg.Text('SVG Scale', size=(15, 1)), sg.Combo(['none', 'a4', 'a3'], default_value='a4', size=(15, 1), key="utility_pageScale"),
             sg.Text('Page Orientation', size=(15, 1)), sg.Combo(['portrait', 'landscape'], default_value='portrait', size=(15, 1), key="utility_pageOrientation")
         ],
         [sg.Button('SVG to HPGL', size=(25, 1), key='utility_convertHPGL')],
@@ -49,7 +50,8 @@ def main():
         [sg.Button('Optimize SVG', size=(25, 1), key='utility_svgoOptimizeBulk')],
         [sg.Text('-- HPGL --')],
         [
-            sg.Text('Page Size', size=(15, 1)), sg.Combo(['tight', 'a6', 'a5', 'a4', 'a3', 'letter', 'legal', 'executive', 'tabloid'], default_value='a4', size=(15, 1), key="utility_pageSizeBulk"),
+            sg.Text('Page Size', size=(15, 1)), sg.Combo(['a4', 'a3'], default_value='a4', size=(15, 1), key="utility_pageSizeBulk"),
+            sg.Text('SVG Scale', size=(15, 1)), sg.Combo(['none', 'a4', 'a3'], default_value='a4', size=(15, 1), key="utility_pageScaleBulk"),
             sg.Text('Page Orientation', size=(15, 1)), sg.Combo(['portrait', 'landscape'], default_value='portrait', size=(15, 1), key="utility_pageOrientationBulk")
         ],
         [sg.Button('SVG to HPGL', size=(25, 1), key='utility_convertHPGLBulk')],
@@ -153,10 +155,38 @@ def main():
         if event == 'utility_convertHPGL':
             if values['inputSVG']:
                 outputFile = values['inputSVG'][:-4] + '-Converted.hpgl'
+
+                # Scale svg to desired paper size
+                args = 'vpype';
+                args += ' read "' + str(values['inputSVG']) + '"'; #Read input svg
+
                 if (values['utility_pageOrientation'] == 'landscape'):
-                    subprocess.Popen('vpype read "' + str(values['inputSVG']) + '" write --device hp7475a --page-size ' + str(values['utility_pageSize']) + ' --landscape --center "' + str(outputFile) + '"')
+                    if (values['utility_pageScale'] == 'a3'):
+                        args += ' scaleto 40cm 27.7cm';
+                    elif (values['utility_pageScale'] == 'a4'):
+                        args += ' scaleto 27.7cm 19cm';
                 else:
-                    subprocess.Popen('vpype read "' + str(values['inputSVG']) + '" write --device hp7475a --page-size ' + str(values['utility_pageSize']) + ' --center "' + str(outputFile) + '"')
+                    if (values['utility_pageScale'] == 'a3'):
+                        args += ' scaleto 27.7cm 40cm';
+                    elif (values['utility_pageScale'] == 'a4'):
+                        args += ' scaleto 19cm 27.7cm';
+
+                args += ' write --device hp7475a';
+
+                args += ' --page-size ' + str(values['utility_pageSize']);
+
+                if (values['utility_pageOrientation'] == 'landscape'):
+                    args += ' --landscape';
+
+                args += ' --center';
+                args += ' "' + str(outputFile) + '"'
+
+                rendering = subprocess.Popen(args)
+                rendering.wait() # Hold on till process is finished
+
+                # print(args)
+                print('- Exported ' + str(outputFile))
+
             else:
                 sg.popup_error('Please select a valid .svg file')
 
@@ -188,12 +218,36 @@ def main():
                             file_path = os.path.join(root, filename)
                             outputFile = file_path[:-4] + '-Converted.hpgl'
 
+                            # Scale svg to desired paper size
+                            args = 'vpype';
+                            args += ' read "' + str(values['inputSVG']) + '"'; #Read input svg
+
                             if (values['utility_pageOrientationBulk'] == 'landscape'):
-                                rendering = subprocess.Popen('vpype read "' + str(file_path) + '" write --device hp7475a --page-size ' + str(values['utility_pageSizeBulk']) + ' --landscape --center "' + str(outputFile) + '"')
-                                rendering.wait() # Hold on till process is finished
+                                if (values['utility_pageScaleBulk'] == 'a3'):
+                                    args += ' scaleto 40cm 27.7cm';
+                                elif (values['utility_pageScaleBulk'] == 'a4'):
+                                    args += ' scaleto 27.7cm 19cm';
                             else:
-                                rendering = subprocess.Popen('vpype read "' + str(file_path) + '" write --device hp7475a --page-size ' + str(values['utility_pageSizeBulk']) + ' --center "' + str(outputFile) + '"')
-                                rendering.wait() # Hold on till process is finished
+                                if (values['utility_pageScaleBulk'] == 'a3'):
+                                    args += ' scaleto 27.7cm 40cm';
+                                elif (values['utility_pageScaleBulk'] == 'a4'):
+                                    args += ' scaleto 19cm 27.7cm';
+
+                            args += ' write --device hp7475a';
+
+                            args += ' --page-size ' + str(values['utility_pageSizeBulk']);
+
+                            if (values['utility_pageOrientationBulk'] == 'landscape'):
+                                args += ' --landscape';
+
+                            args += ' --center';
+                            args += ' "' + str(outputFile) + '"'
+
+                            rendering = subprocess.Popen(args)
+                            rendering.wait() # Hold on till process is finished
+
+                            # print(args)
+                            print('- Exported ' + str(outputFile))
 
             else:
                 sg.popup_error('Please select a valid folder')

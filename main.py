@@ -2,6 +2,7 @@ import PySimpleGUI as sg
 import configparser
 import subprocess
 import os
+from datetime import datetime
 
 import send2serial
 
@@ -66,21 +67,36 @@ def main():
         [sg.Text('Input Image', size=(15, 1)), sg.Input(key='inputVpypeFlowImagerImage'), sg.FileBrowse(file_types=(('IMG', '*.*'),),)],
 
         [sg.Text('Simplex noise coordinate multiplier. The smaller, the smoother the flow field.', size=(55, 1)),
-         sg.Slider(range=(1,10), default_value=1, size=(20,15), orientation='horizontal', key="vfi_noise_coeff")], # FLOAT 0.001
+         sg.Slider(range=(0.00,1.00), resolution=0.001, default_value=0.001, size=(20,15), orientation='horizontal', key="vfi_noise_coeff")], # FLOAT 0.001
         [sg.Text('Number of rotated copies of the flow field', size=(55, 1)),
          sg.Slider(range=(0,10), default_value=1, size=(20,15), orientation='horizontal', key="vfi_n_fields")], # INTEGER
         [sg.Text('Minimum flowline separation', size=(55, 1)),
-         sg.Slider(range=(0,10), default_value=8, size=(20,15), orientation='horizontal', key="vfi_min_sep")], # FLOAT 0.8
+         sg.Slider(range=(0,5), resolution=0.1, default_value=0.8, size=(20,15), orientation='horizontal', key="vfi_min_sep")], # FLOAT 0.8
         [sg.Text('Maximum flowline separation', size=(55, 1)),
-         sg.Slider(range=(0,100), default_value=10, size=(20,15), orientation='horizontal', key="vfi_max_sep")], # FLOAT
+         sg.Slider(range=(0,20), resolution=0.1, default_value=10, size=(20,15), orientation='horizontal', key="vfi_max_sep")], # FLOAT
+        [sg.Text('Minimum flowline length', size=(55, 1)),
+         sg.Slider(range=(0,100), default_value=0, size=(20,15), orientation='horizontal', key="vfi_min_length")], # FLOAT
         [sg.Text('Maximum flowline length', size=(55, 1)),
          sg.Slider(range=(0,100), default_value=40, size=(20,15), orientation='horizontal', key="vfi_max_length")], # FLOAT
         [sg.Text('The input image will be rescaled to have sides at most max_size px', size=(55, 1)),
-         sg.Slider(range=(1,10), default_value=8, size=(20,15), orientation='horizontal', key="vfi_max_size")], # INTEGER 800
+         sg.Slider(range=(1,100), default_value=8, size=(20,15), orientation='horizontal', key="vfi_max_size")], # INTEGER 800
+        [sg.Text('HNSWlib search ef (higher -> more accurate, but slower)', size=(55, 1)),
+         sg.Slider(range=(1,100), default_value=50, size=(20,15), orientation='horizontal', key="vfi_search_ef")], # INTEGER
         [sg.Text('PRNG seed (overriding vpype seed)', size=(55, 1)),
          sg.Slider(range=(10,100), default_value=25, size=(20,15), orientation='horizontal', key="vfi_seed")], # INTEGER
         [sg.Text('Flow field PRNG seed (overriding the main --seed)', size=(55, 1)),
          sg.Slider(range=(0,100), default_value=25, size=(20,15), orientation='horizontal', key="vfi_flow_seed")], # INTEGER
+        [sg.Text('Number of separation tests per current flowline separation', size=(55, 1)),
+         sg.Slider(range=(0,10), default_value=2, size=(20,15), orientation='horizontal', key="vfi_test_frequency")], # INTEGER
+
+        [sg.Text('Number of separation tests per current flowline separation', size=(55, 1)),
+         sg.Combo(['noise','curl_noise'], default_value='noise', size=(23, 15), key="vfi_field_type")], # STRING
+        [sg.Text('Value to replace transparent pixels', size=(55, 1)),
+         sg.Slider(range=(0,256), default_value=127, size=(20,15), orientation='horizontal', key="vfi_transparent_val")], # INTEGER
+        [sg.Text('Flow along image edges', size=(55, 1)),
+         sg.Slider(range=(0,10), resolution=0.1, default_value=0, size=(20,15), orientation='horizontal', key="vfi_edge_field_multiplier")], # FLOAT
+        [sg.Text('Flow swirling around dark image areas', size=(55, 1)),
+         sg.Slider(range=(0,10), resolution=0.1, default_value=0, size=(20,15), orientation='horizontal', key="vfi_dark_field_multiplier")], # FLOAT
 
         [sg.Button('Start processing image', size=(25, 1), key='utility_RunVpypeFlowImager')],
     ]
@@ -267,19 +283,31 @@ def main():
         # Vpype Flow Imager
         if event == 'utility_RunVpypeFlowImager':
             if values['inputVpypeFlowImagerImage']:
-                outputFile = values['inputVpypeFlowImagerImage'][:-3] + '-.svg'
+                outputFile = values['inputVpypeFlowImagerImage'][:-3] + datetime.now().strftime("%Y_%m_%d-%I_%M_%S_%p") + '.svg'
 
                 # Generate parameters
-                args = ''
-                args += 'noise_coeff= ' + str(values['vfi_noise_coeff'])
-                args += ' n_fields= ' + str(values['vfi_n_fields'])
-                args += ' min_sep= ' + str(values['vfi_min_sep'])
-                args += ' max_sep= ' + str(values['vfi_max_sep'])
-                args += ' max_length= ' + str(values['vfi_max_length'])
-                args += ' max_size= ' + str(values['vfi_max_size'])
-                args += ' seed= ' + str(values['vfi_seed'])
-                args += ' flow_seed= ' + str(values['vfi_flow_seed'])
-                subprocess.Popen('vpype flow_img "' + str(values['inputVpypeFlowImagerImage']) + '" write "' + str(outputFile) + '"')
+                args = 'vpype flow_img'
+                args += ' --noise_coeff ' + str(values['vfi_noise_coeff']) #  Simplex noise coordinate multiplier. The smaller, the smoother the flow field.
+                args += ' --n_fields ' + str(int(values['vfi_n_fields'])) # Number of rotated copies of the flow field
+                args += ' --min_sep ' + str(values['vfi_min_sep']) # Minimum flowline separation  [default: 0.8]
+                args += ' --max_sep ' + str(values['vfi_max_sep']) # Maximum flowline separation  [default: 10]
+                args += ' --min_length ' + str(values['vfi_min_length']) # Minimum flowline length  [default: 0]
+                args += ' --max_length ' + str(values['vfi_max_length']) # Maximum flowline length  [default: 40]
+                args += ' --max_size ' + str(int(values['vfi_max_size']*100)) # The input image will be rescaled to have sides at most max_size px  [default: 800]
+                args += ' --search_ef ' + str(int(values['vfi_search_ef'])) # HNSWlib search ef (higher -> more accurate, but slower)  [default: 50]
+                args += ' --seed ' + str(int(values['vfi_seed'])) # PRNG seed (overriding vpype seed)
+                args += ' --flow_seed ' + str(int(values['vfi_flow_seed'])) # Flow field PRNG seed (overriding the main `--seed`)
+                args += ' --test_frequency ' + str(values['vfi_test_frequency']) # Number of separation tests per current flowline separation  [default: 2]
+                args += ' --field_type ' + str(values['vfi_field_type']) #
+                args += ' --transparent_val ' + str(int(values['vfi_transparent_val'])) #
+                args += ' --edge_field_multiplier ' + str(values['vfi_edge_field_multiplier']) #
+                args += ' --dark_field_multiplier ' + str(values['vfi_dark_field_multiplier']) #
+                args += ' "' + str(values['inputVpypeFlowImagerImage']) + '"' # Input
+                args += ' write "' + str(outputFile) + '"' # Output
+
+                rendering = subprocess.Popen(args)
+                rendering.wait() # Hold on till process is finished
+
             else:
                 sg.popup_error('Please select a valid .jpg file')
         # Software

@@ -102,7 +102,8 @@ def plotter_cmd(tty, cmd, get_answer=False):
 
 def listComPorts():
     for i in serial.tools.list_ports.comports():
-        sg.Print(str(i).split(" ")[0], background_color='blue', text_color='white')
+        # sg.Print(str(i).split(" ")[0], background_color='blue', text_color='white')
+        print(str(i).split(" ")[0])
 
 def sendToPlotter(hpglfile, port = 'COM3', baud = 9600, plotter = '7475a'):
     print(plotter)
@@ -146,19 +147,23 @@ def sendToPlotter(hpglfile, port = 'COM3', baud = 9600, plotter = '7475a'):
         # Output Buffer Size [Manual 10-36]
         bufsz = plotter_cmd(tty, b'\033.L', True)
     except HPGLError as e:
-        sg.Print('*** Error initializing the plotter!', background_color='red', text_color='white')
-        sg.Print(e)
+        # sg.Print('*** Error initializing the plotter!', background_color='red', text_color='white')
+        # sg.Print(e)
+        print('*** Error initializing the plotter!')
+        print(e)
         # sys.exit(1)
         return
 
-    sg.Print('Buffer size of plotter is', bufsz, 'bytes.')
+    # sg.Print('Buffer size of plotter is', bufsz, 'bytes.')
+    print('Buffer size of plotter is', bufsz, 'bytes.')
 
     total_bytes_written = 0
 
     while True:
         status = plotter_cmd(tty, b'\033.O', True)
         if (status & (EXT_STATUS_VIEW | EXT_STATUS_LEVER)):
-            sg.Print('*** Printer is viewing plot, pausing data.')
+            # sg.Print('*** Printer is viewing plot, pausing data.')
+            print('*** Printer is viewing plot, pausing data.')
             time.sleep(5.0)
             continue
 
@@ -173,18 +178,22 @@ def sendToPlotter(hpglfile, port = 'COM3', baud = 9600, plotter = '7475a'):
         bufsz_read = len(data)
 
         if bufsz_read == 0:
-            sg.Print('*** EOF reached, exiting.')
+            # sg.Print('*** EOF reached, exiting.')
+            print('*** EOF reached, exiting.')
             notification.telegram_sendNotification('*** EOF reached, exiting.')
             break
 
         if input_bytes != None:
             percent = 100.0 * total_bytes_written/input_bytes
-            sg.Print(
+            # sg.Print(
                 # f'{percent:.2f}%, {total_bytes_written} byte written. Adding {bufsz_read} ({bufsz} free).')
-                f'{percent:.2f}%, {total_bytes_written} byte written. \n')
+                # f'{percent:.2f}%, {total_bytes_written} byte written. \n')
+            print(f'{percent:.2f}%, {total_bytes_written} byte written. \n')
         else:
-            sg.Print(
-                # f'{total_bytes_written} byte written. Adding {bufsz_read} ({bufsz} free).')
-                f'{percent:.2f}%, {bufsz_read} byte added. \n')
+            # sg.Print(
+            #     # f'{total_bytes_written} byte written. Adding {bufsz_read} ({bufsz} free).')
+            #     f'{percent:.2f}%, {bufsz_read} byte added. \n')
+            print(f'{percent:.2f}%, {bufsz_read} byte added. \n')
+
         tty.write(data)
         total_bytes_written += bufsz_read

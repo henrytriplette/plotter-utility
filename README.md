@@ -1,6 +1,7 @@
 # HP7475a Pen Plotter Utility
 
-Python GUI to simplify working with a HP7475a Pen Plotte
+Python GUI to simplify working with a HP7475a Pen plotter
+- Now supporting Graphtech MP4200
 
 [![Image of HP7475a Pen Plotter Utility](./doc/screenshot.png)](https://github.com/henrytriplette/plotter-utility)
 

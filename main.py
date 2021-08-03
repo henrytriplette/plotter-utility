@@ -178,7 +178,7 @@ def main():
 
                 if (values['utility_pageOrientation'] == 'landscape'):
                     if (values['utility_pageScale'] == 'a3'):
-                        args += ' scaleto 40cm 27.7cm';
+                        args += ' scaleto 39cm 26.7cm';
                     elif (values['utility_pageScale'] == 'a4'):
                         args += ' scaleto 27.7cm 19cm';
                 else:

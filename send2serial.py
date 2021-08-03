@@ -9,7 +9,7 @@ import serial
 import serial.tools.list_ports
 from serial import SerialException
 
-import PySimpleGUI as sg
+# import PySimpleGUI as sg
 import notification
 
 # answer to <ESC>.O Output Extended Status Information [Manual: 10-42]
@@ -121,13 +121,15 @@ def sendToPlotter(hpglfile, port = 'COM3', baud = 9600, plotter = '7475a'):
         try:
             tty = serial.Serial(port = port, baudrate = 9600, parity = serial.PARITY_NONE, stopbits = serial.STOPBITS_ONE, bytesize = serial.EIGHTBITS, xonxoff = True, timeout = 2.0)
         except SerialException as e:
-            sg.popup_error(repr(e))
+            # sg.popup_error(repr(e))
+            print(repr(e))
             return False
     else:
         try:
             tty = serial.Serial(port, baudrate = 9600, timeout=2.0)
         except SerialException as e:
-            sg.popup_error(repr(e))
+            # sg.popup_error(repr(e))
+            print(repr(e))
             return False
 
     # <ESC>.@<dec>;<dec>:
@@ -188,12 +190,12 @@ def sendToPlotter(hpglfile, port = 'COM3', baud = 9600, plotter = '7475a'):
             # sg.Print(
                 # f'{percent:.2f}%, {total_bytes_written} byte written. Adding {bufsz_read} ({bufsz} free).')
                 # f'{percent:.2f}%, {total_bytes_written} byte written. \n')
-            print(f'{percent:.2f}%, {total_bytes_written} byte written. \n')
+            print(f'{percent:.2f}%, {total_bytes_written} byte written.')
         else:
             # sg.Print(
             #     # f'{total_bytes_written} byte written. Adding {bufsz_read} ({bufsz} free).')
             #     f'{percent:.2f}%, {bufsz_read} byte added. \n')
-            print(f'{percent:.2f}%, {bufsz_read} byte added. \n')
+            print(f'{percent:.2f}%, {bufsz_read} byte added.')
 
         tty.write(data)
         total_bytes_written += bufsz_read

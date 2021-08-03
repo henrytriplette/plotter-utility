@@ -12,6 +12,7 @@ config.read('config.ini')
 def main(file, port, baudrate = '9600', device = '7475a'):
 
     if not port:
+        print('Avaliable Serial Ports: \n')
         send2serial.listComPorts()
     else:
         if file:

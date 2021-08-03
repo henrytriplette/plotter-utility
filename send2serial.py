@@ -191,6 +191,7 @@ def sendToPlotter(hpglfile, port = 'COM3', baud = 9600, plotter = '7475a'):
                 # f'{percent:.2f}%, {total_bytes_written} byte written. Adding {bufsz_read} ({bufsz} free).')
                 # f'{percent:.2f}%, {total_bytes_written} byte written. \n')
             print(f'{percent:.2f}%, {total_bytes_written} byte written.')
+
         else:
             # sg.Print(
             #     # f'{total_bytes_written} byte written. Adding {bufsz_read} ({bufsz} free).')

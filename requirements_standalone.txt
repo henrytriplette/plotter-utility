@@ -1,3 +1,2 @@
 pyserial==3.4
-PySimpleGUI==4.30.0
 requests

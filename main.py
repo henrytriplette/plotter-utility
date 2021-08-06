@@ -101,6 +101,14 @@ def main():
         [sg.Button('Start processing image', size=(25, 1), key='utility_RunVpypeFlowImager')],
     ]
 
+    vpype_cmyksplit = [
+        [sg.Text('Input Image', size=(15, 1)), sg.Input(key='inputVpypeCmyksplitImage'), sg.FileBrowse(file_types=(('IMG', '*.*'),),)],
+        [sg.Checkbox('Invert image', default=True, key='utility_VpypeCmyksplitInvert')],
+        [sg.Button('CMYK split image', size=(35, 1), key='utility_RunVpypeCmyksplit')],
+        [sg.Text('Flow Images parameters are taken from the Vpype Flow Imager tab.')],
+        [sg.Button('CMYK split and Flow Image Convert', size=(35, 1), key='utility_RunVpypeCmyksplitFlowImage')],
+    ]
+
     plot = [
         [sg.Text('Input HPGL', size=(15, 1)), sg.Input(key='inputHPGL'), sg.FileBrowse(file_types=(('HPGL', '*.hpgl'),),)],
         [sg.Text('Comm Port', size=(15, 1)), sg.InputText(default_text="COM3", key="utility_comPort"), sg.Button('List Ports', size=(15, 1), key='utility_listPorts')],
@@ -122,6 +130,7 @@ def main():
                         sg.Tab('SVG Bulk', svg_utility_bulk, tooltip='SVG Bulk Processing'),
                         sg.Tab('HPGL Utility', hpgl_utility, tooltip='HPGL Utility'),
                         sg.Tab('Vpype Flow Imager', vpype_flow_imager, tooltip='Vpype Flow Imager'),
+                        sg.Tab('Vpype Cmyksplit', vpype_cmyksplit, tooltip='Vpype Cmyksplit'),
                         sg.Tab('Serial Print', plot, tooltip='Print on HP 7475a or Graphtech MP4200'),
                         sg.Tab('Links', link, tooltip='Links'),
                         ]
@@ -283,7 +292,10 @@ def main():
         # Vpype Flow Imager
         if event == 'utility_RunVpypeFlowImager':
             if values['inputVpypeFlowImagerImage']:
-                outputFile = values['inputVpypeFlowImagerImage'][:-3] + datetime.now().strftime("%Y_%m_%d-%I_%M_%S_%p") + '.svg'
+
+                filename, file_extension = os.path.splitext(values['inputVpypeFlowImagerImage'])
+
+                outputFile = filename + '_' + datetime.now().strftime("%Y_%m_%d-%I_%M_%S_%p") + '.svg'
 
                 # Generate parameters
                 args = 'vpype flow_img'
@@ -310,6 +322,71 @@ def main():
 
             else:
                 sg.popup_error('Please select a valid .jpg file')
+
+        # Vpype Cmyksplit
+        if event == 'utility_RunVpypeCmyksplit':
+            if values['inputVpypeCmyksplitImage']:
+
+                # Generate parameters
+                args = 'cmyksplit'
+                if values['utility_VpypeCmyksplitInvert'] == True:
+                    args += ' --invert' # Invert image
+                args += ' "' + str(values['inputVpypeCmyksplitImage']) + '"' # Input
+
+                rendering = subprocess.Popen(args)
+                rendering.wait() # Hold on till process is finished
+
+            else:
+                sg.popup_error('Please select a valid image file')
+
+        # Vpype Cmyksplit + Vpype Flow Imager
+        if event == 'utility_RunVpypeCmyksplitFlowImage':
+            if values['inputVpypeCmyksplitImage']:
+
+                # Generate parameters
+                args = 'cmyksplit'
+                if values['utility_VpypeCmyksplitInvert'] == True:
+                    args += ' --invert' # Invert image
+                args += ' "' + str(values['inputVpypeCmyksplitImage']) + '"' # Input
+
+                rendering = subprocess.Popen(args)
+                rendering.wait() # Hold on till process is finished
+
+                # Loop trought the resoults
+                split_dict = {'black', 'cyan', 'magenta', 'yellow'}
+                for key in split_dict:
+
+                    filename, file_extension = os.path.splitext(values['inputVpypeCmyksplitImage'])
+
+                    inputFile = filename + '_' + key + file_extension
+                    outputFile = filename + '_' + key + '_' + datetime.now().strftime("%Y_%m_%d-%I_%M_%S_%p") + '.svg'
+
+                    # Generate parameters
+                    args = 'vpype flow_img'
+                    args += ' --noise_coeff ' + str(values['vfi_noise_coeff']) #  Simplex noise coordinate multiplier. The smaller, the smoother the flow field.
+                    args += ' --n_fields ' + str(int(values['vfi_n_fields'])) # Number of rotated copies of the flow field
+                    args += ' --min_sep ' + str(values['vfi_min_sep']) # Minimum flowline separation  [default: 0.8]
+                    args += ' --max_sep ' + str(values['vfi_max_sep']) # Maximum flowline separation  [default: 10]
+                    args += ' --min_length ' + str(values['vfi_min_length']) # Minimum flowline length  [default: 0]
+                    args += ' --max_length ' + str(values['vfi_max_length']) # Maximum flowline length  [default: 40]
+                    args += ' --max_size ' + str(int(values['vfi_max_size']*100)) # The input image will be rescaled to have sides at most max_size px  [default: 800]
+                    args += ' --search_ef ' + str(int(values['vfi_search_ef'])) # HNSWlib search ef (higher -> more accurate, but slower)  [default: 50]
+                    args += ' --seed ' + str(int(values['vfi_seed'])) # PRNG seed (overriding vpype seed)
+                    args += ' --flow_seed ' + str(int(values['vfi_flow_seed'])) # Flow field PRNG seed (overriding the main `--seed`)
+                    args += ' --test_frequency ' + str(values['vfi_test_frequency']) # Number of separation tests per current flowline separation  [default: 2]
+                    args += ' --field_type ' + str(values['vfi_field_type']) #
+                    args += ' --transparent_val ' + str(int(values['vfi_transparent_val'])) #
+                    args += ' --edge_field_multiplier ' + str(values['vfi_edge_field_multiplier']) #
+                    args += ' --dark_field_multiplier ' + str(values['vfi_dark_field_multiplier']) #
+                    args += ' "' + str(inputFile) + '"' # Input
+                    args += ' write "' + str(outputFile) + '"' # Output
+
+                    rendering = subprocess.Popen(args)
+                    rendering.wait() # Hold on till process is finished
+
+            else:
+                sg.popup_error('Please select a valid image file')
+
         # Software
         if event == 'illustrator':
             if config['software']['illustrator']:

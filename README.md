@@ -5,6 +5,7 @@ Python GUI to simplify working with pen plotters:
 - Standalone version for Raspberry PI headless printing.
 - Telegram notification on print ended
 - Poweroff your plotter on print end using a Tasmota-enabled Sonoff controller
+- Combine CMYK Split with Flow Imager
 
 [![Image of HP7475a Pen Plotter Utility](./doc/screenshot.png)](https://github.com/henrytriplette/plotter-utility)
 
@@ -22,6 +23,7 @@ Plotter Utility uses:
 - vpype [Installation instructions](https://github.com/abey79/vpype/#installation)
 - vpype-flow-imager [Installation instructions](https://github.com/serycjon/vpype-flow-imager#getting-started)
 - svgo [Installation instructions](https://github.com/svg/svgo#installation)
+- cmyksplit [Installation instructions](https://github.com/abey79/plottertools/tree/main/cmyksplit#installation)
 
 After installing the dependencies, use Python package manager [pip](https://pip.pypa.io/en/stable/) to install the requirements for the GUI.
 

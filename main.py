@@ -245,17 +245,17 @@ def main():
 
                             # Scale svg to desired paper size
                             args = 'vpype';
-                            args += ' read "' + str(values['inputSVG']) + '"'; #Read input svg
+                            args += ' read "' + str(file_path) + '"'; #Read input svg
 
-                            if (values['utility_pageOrientationBulk'] == 'landscape'):
-                                if (values['utility_pageScaleBulk'] == 'a3'):
-                                    args += ' scaleto 40cm 27.7cm';
-                                elif (values['utility_pageScaleBulk'] == 'a4'):
+                            if (values['utility_pageOrientation'] == 'landscape'):
+                                if (values['utility_pageScale'] == 'a3'):
+                                    args += ' scaleto 39cm 26.7cm';
+                                elif (values['utility_pageScale'] == 'a4'):
                                     args += ' scaleto 27.7cm 19cm';
                             else:
-                                if (values['utility_pageScaleBulk'] == 'a3'):
+                                if (values['utility_pageScale'] == 'a3'):
                                     args += ' scaleto 27.7cm 40cm';
-                                elif (values['utility_pageScaleBulk'] == 'a4'):
+                                elif (values['utility_pageScale'] == 'a4'):
                                     args += ' scaleto 19cm 27.7cm';
 
                             args += ' write --device hp7475a';
